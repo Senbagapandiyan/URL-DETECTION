@@ -1,5 +1,11 @@
-flask
+Flask
+gunicorn
 pandas
+numpy
 scikit-learn
 joblib
+Werkzeug
+Jinja2
 reportlab
+Pillow
+scipy
