@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Phishing Detector - Cybersecurity Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-8">
+        <div class="card dashboard-card shadow-lg border-0 rounded-4 h-100">
+            <div class="card-body p-4 p-lg-5">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                    <div>
+                        <p class="section-label mb-2"><i class="fa-solid fa-bolt me-2"></i> Cybersecurity Analysis</p>
+                        <h1 class="display-6 fw-bold mb-1">Machine Learning Phishing Website Detection</h1>
+                        <p class="text-muted mb-0">Enter a URL to receive a professional phishing risk assessment with confidence scoring and feature inspection.</p>
+                    </div>
+                    <div class="stat-pill">
+                        <i class="fa-solid fa-chart-line me-2"></i> Model Accuracy: {{ accuracy }}%
+                    </div>
+                </div>
+
+                <form id="scanForm" method="post" action="{{ url_for('index') }}" class="mt-4">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text"><i class="fa-solid fa-link"></i></span>
+                        <input type="text" class="form-control" name="url" placeholder="https://example.com" value="{{ submitted_url or '' }}" required>
+                        <button class="btn btn-primary px-4" type="submit">
+                            <span class="me-2"><i class="fa-solid fa-magnifying-glass"></i></span> Analyze
+                        </button>
+                    </div>
+                    <div id="loadingState" class="d-none mt-3 text-primary fw-semibold">
+                        <span class="me-2"><i class="fa-solid fa-spinner fa-spin"></i></span> Scanning URL...
+                    </div>
+                </form>
+
+                {% if result %}
+                <div class="mt-4 p-4 rounded-4 {{ result.card_class }}">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="{{ result.icon_class }} fs-4"></i>
+                                <h3 class="mb-0">{{ result.prediction }}</h3>
+                            </div>
+                            <p class="mb-0">{{ result.explanation }}</p>
+                            <p class="mb-0 mt-2 fw-semibold {{ result.status_text_class }}">{{ result.status_text }}</p>
+                            <p class="mb-0 mt-2 text-muted"><i class="fa-solid fa-clock me-1"></i> Scanned at {{ result.scanned_at }}</p>
+                        </div>
+                        <span class="fs-6 px-3 py-2 {{ result.badge_class }}">{{ result.risk_level }}</span>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-semibold">Confidence</span>
+                            <strong>{{ result.confidence }}%</strong>
+                        </div>
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar {{ result.progress_class }}" role="progressbar" style="width: {{ result.confidence }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card dashboard-card shadow-lg border-0 rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0"><i class="fa-solid fa-list-check me-2"></i> Feature Analysis</h4>
+                    <span class="section-label">Live Signals</span>
+                </div>
+                {% if result %}
+                    <div class="feature-stack">
+                        {% for feature, detail in result.feature_analysis.items() %}
+                        <div class="feature-item d-flex align-items-start justify-content-between gap-3">
+                            <div>
+                                <div class="fw-semibold">{{ feature }}</div>
+                                <div class="text-muted small">{{ detail.value }}</div>
+                            </div>
+                            <div class="feature-icon {{ detail.status }}">
+                                {% if detail.status == 'safe' %}
+                                    <i class="fa-solid fa-circle-check"></i>
+                                {% elif detail.status == 'warning' %}
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Feature details will appear after the first URL analysis.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-lg-7">
+        <div class="card dashboard-card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h4 class="mb-0"><i class="fa-solid fa-brain me-2"></i> Detection Reason</h4>
+                </div>
+                {% if result %}
+                <ul class="reason-list">
+                    {% for reason in result.reasons %}
+                    <li><i class="fa-solid fa-caret-right me-2"></i> {{ reason }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">Reasoning details will be shown after the scan completes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card dashboard-card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h4 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2"></i> Recent Scans</h4>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('history') }}">Full History</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Result</th>
+                                <th>PDF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for scan in history %}
+                            <tr>
+                                <td class="text-break">{{ scan.url }}</td>
+                                <td><span class="badge {{ 'bg-danger' if scan.prediction == 'Phishing' else 'bg-success' }}">{{ scan.prediction }}</span></td>
+                                <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('download_report', scan_id=scan.id) }}"><i class="fa-solid fa-file-pdf"></i></a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="3" class="text-center text-muted">No scans recorded yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('scanForm')?.addEventListener('submit', function () {
+        const loading = document.getElementById('loadingState');
+        const button = this.querySelector('button[type="submit"]');
+        if (loading) loading.classList.remove('d-none');
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="me-2"><i class="fa-solid fa-spinner fa-spin"></i></span> Scanning';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}History | Phishing Detector{% endblock %}
+
+{% block content %}
+<div class="card dashboard-card shadow-lg border-0 rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h3 class="mb-1"><i class="fa-solid fa-clock-rotate-left me-2"></i> URL Scan History</h3>
+            <p class="text-muted mb-0">Search, filter, and export historical scans as PDF reports.</p>
+        </div>
+        <a class="btn btn-outline-primary" href="{{ url_for('export_history_pdf', search=search, prediction=prediction_filter, risk=risk_filter, start_date=start_date, end_date=end_date) }}">
+            <i class="fa-solid fa-file-pdf me-2"></i> Export History PDF
+        </a>
+    </div>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <input type="text" class="form-control" name="search" placeholder="Search by URL or result" value="{{ search }}">
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="prediction">
+                <option value="">All Predictions</option>
+                <option value="Legitimate" {{ 'selected' if prediction_filter == 'Legitimate' else '' }}>Legitimate</option>
+                <option value="Phishing" {{ 'selected' if prediction_filter == 'Phishing' else '' }}>Phishing</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="risk">
+                <option value="">All Risks</option>
+                <option value="Low Risk" {{ 'selected' if risk_filter == 'Low Risk' else '' }}>Low Risk</option>
+                <option value="Medium Risk" {{ 'selected' if risk_filter == 'Medium Risk' else '' }}>Medium Risk</option>
+                <option value="High Risk" {{ 'selected' if risk_filter == 'High Risk' else '' }}>High Risk</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="fa-solid fa-filter me-2"></i> Apply Filters</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">Reset</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+            <tr>
+                <th>URL</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+                <th>Risk</th>
+                <th>Date & Time</th>
+                <th>Report</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for scan in history %}
+            <tr>
+                <td class="text-break">{{ scan.url }}</td>
+                <td><span class="badge {{ 'bg-danger' if scan.prediction == 'Phishing' else 'bg-success' }}">{{ scan.prediction }}</span></td>
+                <td>{{ scan.confidence }}%</td>
+                <td>{{ scan.risk_level }}</td>
+                <td>{{ scan.created_at }}</td>
+                <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('download_report', scan_id=scan.id) }}"><i class="fa-solid fa-file-pdf me-1"></i> PDF</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No scan history recorded yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
